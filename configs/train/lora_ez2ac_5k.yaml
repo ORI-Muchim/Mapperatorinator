@@ -1,0 +1,63 @@
+defaults:
+  - v32
+  - _self_
+
+# LoRA fine-tune of the V32 osu!mania checkpoint on EZ2AC 5K charts.
+# Build the dataset first with tools/ez2ac/build_dataset.py.
+
+compile: true          # PyTorch 2.0 optimization
+mixed_precision: 'bf16'         # Enable mixed precision (no/fp16/bf16)
+enable_lora: true              # Use LoRA for finetuning
+
+pretrained_path: "OliBomby/Mapperatorinator-v32"     # Path to pretrained model weights
+pretrained_gamemode: 3  # Start from the osu!mania (gamemode=3) checkpoint
+
+data:                  # Data settings
+  dataset_type: "mmrs"
+  train_dataset_path: "/workspace/datasets/ez2ac_5k"
+  test_dataset_path: "/workspace/datasets/ez2ac_5k"
+  # Split by song (beatmap set) index; adjust to the song count printed by build_dataset.py
+  train_dataset_start: 0
+  train_dataset_end: 410
+  test_dataset_start: 410
+  test_dataset_end: 433
+  gamemodes: [3]
+  ranked_statuses: [1]
+  min_year: null
+  max_year: null
+
+dataloader:             # Dataloader settings
+  num_workers: 4
+  drop_last: false
+  balancer_buffer_size: 0
+
+optim:                  # Optimizer settings
+  name: muon
+  base_lr: 0.0004         # Should be scaled with the number of devices present
+  base_lr_2: 0.0001        # Secondary learning rate for the internal optimizer
+  batch_size: 32
+  grad_acc: 4
+  total_steps: 5000
+  warmup_steps: 0
+  sustain_steps: 0      # Steps to sustain the learning rate after warmup
+  weight_decay: 0.01
+  lr_scheduler: cosine
+  final_cosine: 0
+
+eval:
+  every_steps: 500
+  steps: 100
+
+checkpoint:
+  every_steps: 1000
+
+lora:
+  r: 64
+  lora_alpha: 128
+  target_modules: ['Wq', 'Wkv', 'Wqkv', 'Wo']
+  lora_dropout: 0.05
+  bias: "none"
+  init_lora_weights: "pissa"
+
+lora_metadata:
+  ckpt_subfolders: ["gamemode=3"]  # Only apply this LoRA on top of the gamemode=3 checkpoint.
