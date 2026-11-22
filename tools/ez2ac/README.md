@@ -60,7 +60,15 @@ ez2ac_5k/
 
 `conversion_report.csv`에서 `mr_source=guessed`나 `dropped_before_mr`가 큰 채보는 매니페스트에 `mr_sample`/`mr_ms`를 넣어 바로잡으세요.
 
+학습 전에 데이터셋이 학습 데이터 로더로 제대로 읽히는지 확인합니다(GPU 불필요). `--train-end`와 `--test-end`는 학습/테스트 곡 범위입니다.
+
+```bash
+python tools/ez2ac/check_dataset.py --dataset /abs/path/datasets/ez2ac_5k --train-end 410 --test-end 433
+```
+
 ## 학습 (LoRA, V32 mania 체크포인트 기반)
+
+내 PC에서 처음부터 끝까지 진행하는 순서는 [HANDOFF.md](HANDOFF.md)에 정리되어 있습니다.
 
 `configs/train/lora_ez2ac_5k.yaml`의 데이터 경로와 train/test 곡 범위(`build_dataset.py`가 출력하는 곡 수 기준)를 맞춘 뒤:
 
