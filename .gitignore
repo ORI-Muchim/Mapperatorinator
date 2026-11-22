@@ -11,3 +11,9 @@ test_inference_mai_mod.py
 *.lck
 .env
 .vscode
+# EZ2AC tooling: decryption keys and game data must never be committed
+tools/ez2ac/keys/
+*.ez
+*.ezi
+*.ezz
+*.ssf
