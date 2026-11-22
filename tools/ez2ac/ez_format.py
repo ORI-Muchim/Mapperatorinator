@@ -47,8 +47,13 @@ EVENT_STOP = 7
 TAP_DURATION = 6
 
 
-def load_key(path: str | os.PathLike | None = None) -> bytes:
-    """Load the 512-byte .ez key table from a binary file or a C/C++ source file."""
+def load_key(path: str | os.PathLike | None = None, table: str = "g_ezKeyTable") -> bytes:
+    """Load a 512-byte key table from a binary file or a C/C++ source file.
+
+    ``table`` names the array to read from a source file: ``g_ezKeyTable`` for .ez charts,
+    ``g_eziKeyTable`` for .ezi sample lists. The source declares the tables as ``int`` with
+    values above 255; the game subtracts ``(char)value``, so only the low byte is kept.
+    """
     path = path or os.environ.get("EZ2AC_EZ_KEY")
     if not path:
         raise ValueError("No .ez key given. Pass --key or set the EZ2AC_EZ_KEY environment variable.")
@@ -56,12 +61,12 @@ def load_key(path: str | os.PathLike | None = None) -> bytes:
     if len(data) == KEY_SIZE:
         return data
     text = data.decode("utf-8", errors="ignore")
-    match = re.search(r"g_ezKeyTable\s*\[[^\]]*\]\s*=\s*\{([^}]*)\}", text)
+    match = re.search(rf"\b{re.escape(table)}\s*\[[^\]]*\]\s*=\s*\{{([^}}]*)\}}", text)
     if match:
         values = [int(v, 0) for v in re.findall(r"0[xX][0-9a-fA-F]+|\d+", match.group(1))]
-        if len(values) == KEY_SIZE and all(0 <= v < 256 for v in values):
-            return bytes(values)
-    raise ValueError(f"{path} is neither a {KEY_SIZE}-byte key file nor a source file with g_ezKeyTable[{KEY_SIZE}]")
+        if len(values) == KEY_SIZE:
+            return bytes(v & 0xFF for v in values)
+    raise ValueError(f"{path} is neither a {KEY_SIZE}-byte key file nor a source file with {table}[{KEY_SIZE}]")
 
 
 def _blocks(n: int):
@@ -189,3 +194,26 @@ def parse(plain: bytes) -> EzChart:
 
 def read_ez(path: str | os.PathLike, key: bytes) -> EzChart:
     return parse(decrypt(Path(path).read_bytes(), key))
+
+
+@dataclass
+class SampleEntry:
+    """One line of a decrypted .ezi: the slot a note's ``sample`` indexes, the load kind and the file."""
+    slot: int
+    kind: int
+    name: str  # as written in the .ezi, e.g. "0-MR.wav"; the game opens the .ssf with the same stem
+
+
+def parse_ezi(plain: bytes) -> list[SampleEntry]:
+    """Parse a decrypted .ezi (the game's .ezz): lines of "<slot> <kind> <path> [<second path>]"."""
+    entries = []
+    for line in plain.decode("cp949", errors="replace").splitlines():
+        parts = line.split()
+        if len(parts) >= 3 and parts[0].isdigit() and parts[1].isdigit():
+            entries.append(SampleEntry(int(parts[0]), int(parts[1]), parts[2]))
+    return entries
+
+
+def read_ezi(path: str | os.PathLike, key: bytes) -> list[SampleEntry]:
+    """Read an .ezi sample list; ``key`` is the g_eziKeyTable (``load_key(path, "g_eziKeyTable")``)."""
+    return parse_ezi(decrypt(Path(path).read_bytes(), key))
