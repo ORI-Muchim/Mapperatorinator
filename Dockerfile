@@ -12,7 +12,9 @@ RUN pip install --break-system-packages \
     pydub==0.25.1 \
     nnAudio==0.3.4 \
     PyYAML==6.0.3 \
-    transformers==4.53.3 \
+    transformers==4.57.3 \
+    huggingface-hub==0.36.2 \
+    hf-xet==1.4.2 \
     hydra-core==1.3.2 \
     tensorboard==2.20.0 \
     lightning==2.6.0 \
@@ -25,7 +27,8 @@ RUN pip install --break-system-packages \
     peft==0.18.1 \
     datasets==4.8.3 \
     torchcodec==0.10.0 \
-    rosu-pp-py==3.1.0
+    rosu-pp-py==3.1.0 \
+    rich==14.2.0
 
 # Modify .bashrc to include the custom prompt
 RUN echo 'if [ -f /.dockerenv ]; then export PS1="(docker) $PS1"; fi' >> /root/.bashrc
