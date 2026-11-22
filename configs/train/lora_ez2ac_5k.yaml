@@ -16,11 +16,12 @@ data:                  # Data settings
   dataset_type: "mmrs"
   train_dataset_path: "/workspace/datasets/ez2ac_5k"
   test_dataset_path: "/workspace/datasets/ez2ac_5k"
-  # Split by song (beatmap set) index; adjust to the song count printed by build_dataset.py
+  # Split by beatmap set index; adjust to the set count printed by build_dataset.py
+  # (450 sets from 422 songs with the extract_mr.py manifest; charts of one song stay on one side)
   train_dataset_start: 0
-  train_dataset_end: 410
-  test_dataset_start: 410
-  test_dataset_end: 433
+  train_dataset_end: 428
+  test_dataset_start: 428
+  test_dataset_end: 450
   gamemodes: [3]
   ranked_statuses: [1]
   min_year: null
