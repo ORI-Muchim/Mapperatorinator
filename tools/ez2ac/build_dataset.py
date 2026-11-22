@@ -129,7 +129,9 @@ def main(argv=None):
         # sets; their set IDs follow the song's first set so they sit next to it in the train/test split order.
         groups: dict[str, list[tuple[Path, dict]]] = {}
         for chart_path in charts:
-            row = {**song_row, **chart_rows.get((song, chart_path.name), {})}
+            # A chart row overrides only the columns it fills; blank cells keep the song row's values.
+            chart_row = chart_rows.get((song, chart_path.name), {})
+            row = {**song_row, **{k: v for k, v in chart_row.items() if v != ""}}
             audio = row.get("audio")
             if not audio or not Path(audio).is_file():
                 report_rows.append({"song": song, "chart": chart_path.name, "included": False,
