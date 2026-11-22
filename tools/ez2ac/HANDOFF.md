@@ -110,9 +110,9 @@ o2cross,mr/o2cross.ogg,,,3000
 | `mr_sample` | 그 채보의 `.ezi`에서 MR의 샘플 번호 (**채보 단위로 적기 권장**) |
 | `mr_ms` | MR 시작 시각(ms). 적으면 `mr_sample`보다 우선 |
 
-`mr_sample`과 `mr_ms`가 둘 다 없으면 MR을 추정합니다(BGM 트랙에서 샘플 0번과 1번 중 먼저 울리는 쪽). 추정이 맞지 않는 경우가 있습니다. 31곡은 난이도마다 값이 다르게 나와서, 매니페스트에 정확한 값을 넣는 것이 가장 안전합니다.
+`mr_sample`과 `mr_ms`가 둘 다 없으면 MR을 추정합니다(BGM 트랙에서 샘플 0번과 1번 중 먼저 울리는 쪽). 추정이 맞지 않는 경우가 있으니 매니페스트에 정확한 값을 넣는 것이 가장 안전합니다. 특히 [부록의 확인 필요 목록](#부록-mr-확인이-필요한-곡)에 있는 곡은 꼭 넣어 주세요.
 
-MR이 없는 곡은 처음에는 매니페스트에서 빼세요. 19곡(10blitz, 10harpe, 10yourmind, 118thplanet, 11afterlife, 12engine, 14wealive, 15unforget, 7bleed, 7brilliant, 7kamui, 7luvmsg, 7thrust, 8200re, 8axis 등)은 전부 없고, 5곡(8nachthexen, 9beatrice, 9future, 9wheel, Backformore)은 일부 난이도에만 없습니다.
+MR이 없는 곡(같은 목록의 1번, 2번)은 처음에는 매니페스트에서 빼세요. 키음만으로 된 곡이라 MR을 따로 합성해야 합니다.
 
 ### 3.4 데이터셋 생성
 
@@ -151,6 +151,7 @@ python tools/ez2ac/check_dataset.py --dataset /workspace/datasets/ez2ac_5k --tra
 
 - **경로는 반드시 절대 경로로 쓰세요.** 학습이 시작되면 작업 폴더가 `logs/<날짜>/<시각>/`으로 바뀌어서 상대 경로가 깨집니다.
 - **배치 크기 주의:** `optim.batch_size`(32)는 최종 배치 크기이고, GPU에 한 번에 올라가는 양은 `batch_size ÷ grad_acc`입니다. `batch_size`는 `grad_acc`로 나누어떨어져야 합니다. 메모리를 줄일 때는 `batch_size`는 그대로 두고 `grad_acc`만 올리세요.
+- **RTX 3090 (24GB) 기준:** 기본값 `grad_acc=4`(한 번에 8개)로 시작하세요. 3090은 bf16과 Flash Attention 2를 지원합니다. 처음 수십 step 동안 `nvidia-smi`로 VRAM을 확인하고, 부족하면 8로 올리세요. 여유가 많으면 2(한 번에 16개, 원본 V32 학습 설정과 같음)로 내려도 됩니다. Windows venv에서 `sdpa`로 돌리면 메모리를 더 쓰니 8부터 시작하는 편이 안전합니다. 이 값들은 GPU에서 직접 재 본 값이 아니라 추정입니다.
 - `optim.total_steps: 5000`은 시작값입니다. 학습 로그의 test loss를 보고 줄이거나 늘리세요.
 
 ### 3.7 학습 실행
@@ -218,6 +219,16 @@ tools/ez2ac/HANDOFF.md를 읽고 3.4부터 순서대로 진행해줘.
 각 단계가 끝나면 결과(곡 수, conversion_report 요약, check_dataset 출력, 학습 첫 100 step 로그)를 보여주고,
 에러가 나면 4장 표부터 확인해줘. 키와 데이터는 절대 커밋하지 마.
 ```
+
+## 부록: MR 확인이 필요한 곡
+
+433곡(채보 1,114개) 전체를 채보만으로 분석한 결과입니다. 곡 이름은 zip 안의 곡 폴더 이름입니다.
+
+1. **MR 후보가 없음 (19곡, 모든 난이도):** 10blitz, 10harpe, 10yourmind, 118thplanet, 11afterlife, 12engine, 14wealive, 15unforget, 7bleed, 7brilliant, 7kamui, 7luvmsg, 7thrust, 8200re, 8axis, 8onyx, 8resonance, 9Artemis, 9north
+2. **일부 난이도에만 MR 후보가 없음 (5곡):** 8nachthexen, 9beatrice, 9future, 9wheel, Backformore
+3. **난이도마다 추정한 MR 시작이 20ms 넘게 다름 (22곡, 채보별 `mr_sample`/`mr_ms` 필요):** 15px, 6refresh, 6theboyrm, 7bc, 7final, 7messier, 7vintage, 8escape, 8morgenglut, Anytime, Dieoxin, Exist, Seize, Sparrow, Substance, catchtheflow, envy, freedom, funny, stayrm, therhythm, ztarwarz
+
+추정값의 차이가 20ms 이하인 4곡(214, 5hyper, Jam, Saythat)은 틱 반올림 수준이라 그대로 써도 됩니다.
 
 ## 부록: CPU 스모크 테스트 결과
 
